@@ -85,8 +85,8 @@
   <armgcc.compiler.warnings.AllWarnings>True</armgcc.compiler.warnings.AllWarnings>
   <armgcc.linker.libraries.Libraries>
     <ListValues>
-      <Value>libDivas</Value>
       <Value>libstdio-ll-dbl</Value>
+      <Value>libDivas</Value>
       <Value>libm</Value>
     </ListValues>
   </armgcc.linker.libraries.Libraries>

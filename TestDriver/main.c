@@ -22,6 +22,7 @@
 
 void DivI32empty(int num, int den);
 int DivI32(int num, int den);
+int DivU32(int num, int den);
 
 void DivI64empty(int64_t num, int64_t den);
 int64_t DivI64(int64_t num, int64_t den);
@@ -538,6 +539,18 @@ int main(void)
 	printf("\nStarting up\n");
     while (1)
     {
+	/*
+		// for size comparison
+		// enable desired functions
+		SqrtFlt(1);
+		SqrtDbl(1);
+		DivDbl(1,2);
+		DivFlt(1,2);
+		DivI32(1,2);
+		DivU32(1,2);
+		DivU64(1,2);
+		DivI64(1,2);
+	*/
 		DivDblTest();
 		DivFltTest();
 		SqrtFltTest();

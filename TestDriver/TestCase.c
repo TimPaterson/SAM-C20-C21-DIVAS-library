@@ -21,6 +21,11 @@ int DivI32(int num, int den)
 	return num / den;
 }
 
+uint32_t DivU32(uint32_t num, uint32_t den)
+{
+	return num / den;
+}
+
 void DivI64empty(int64_t num, int64_t den)
 {
 }
