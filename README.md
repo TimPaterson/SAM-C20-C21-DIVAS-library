@@ -51,7 +51,7 @@ saved by this library in comparison with the `libm` shipped with Atmel Studio
 version 7.0.2397. 
 
 | Types | Saved |
-|_______| ___|
+|----|----:|
 | uint32_t          | 248 |
 | uint32_t, int32_t | 716 |
 | uint64_t          | 340 |
