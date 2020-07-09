@@ -142,45 +142,48 @@ cmd /c del $(MSBuildProjectDirectory)\TestDriver\Divas\TestDriver.elf
 </PostBuildEvent>
   </PropertyGroup>
   <ItemGroup>
-    <Compile Include="clz.S">
+    <Compile Include="src\clz.S">
       <SubType>compile</SubType>
     </Compile>
-    <Compile Include="ddiv.S">
+    <Compile Include="src\ddiv.S">
       <SubType>compile</SubType>
     </Compile>
-    <Compile Include="div64.S">
+    <Compile Include="src\div64.S">
       <SubType>compile</SubType>
     </Compile>
-    <Compile Include="divas_asm.h">
+    <Compile Include="src\divas_asm.h">
       <SubType>compile</SubType>
     </Compile>
-    <Compile Include="sqrt.S">
+    <Compile Include="src\fdiv.S">
       <SubType>compile</SubType>
     </Compile>
-    <Compile Include="sqrtf.S">
+    <Compile Include="src\Ieee32.h">
       <SubType>compile</SubType>
     </Compile>
-    <Compile Include="uidiv.S">
+    <Compile Include="src\Ieee64.h">
       <SubType>compile</SubType>
     </Compile>
-    <Compile Include="fdiv.S">
+    <Compile Include="src\ldivmod.S">
       <SubType>compile</SubType>
     </Compile>
-    <Compile Include="Ieee32.h">
+    <Compile Include="src\macros.h">
       <SubType>compile</SubType>
     </Compile>
-    <Compile Include="Ieee64.h">
+    <Compile Include="src\sqrt.S">
       <SubType>compile</SubType>
     </Compile>
-    <Compile Include="ldivmod.S">
+    <Compile Include="src\sqrtf.S">
       <SubType>compile</SubType>
     </Compile>
-    <Compile Include="macros.h">
+    <Compile Include="src\uidiv.S">
       <SubType>compile</SubType>
     </Compile>
-    <Compile Include="uldivmod.S">
+    <Compile Include="src\uldivmod.S">
       <SubType>compile</SubType>
     </Compile>
+  </ItemGroup>
+  <ItemGroup>
+    <Folder Include="src" />
   </ItemGroup>
   <Import Project="$(AVRSTUDIO_EXE_PATH)\\Vs\\Compiler.targets" />
 </Project>
