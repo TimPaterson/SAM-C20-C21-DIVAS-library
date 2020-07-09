@@ -79,26 +79,32 @@
 .endm
 
 .macro	CLZ		arg, cnt, tmp
-	mov	\cnt, #28
-	mov	\tmp, #1
-	lsl	\tmp, #16
-	cmp	\arg, \tmp
-	blo	1f
-	lsr	\arg, #16
+	mov	\cnt, #31		// set to 28 for alternate, below
+	lsr	\tmp, \arg, #16
+	beq	1f
+	mov	\arg, \tmp
 	sub \cnt, #16
 1:
-	lsr	\tmp, #8
-	cmp	\arg, \tmp
-	blo	2f
-	lsr	\arg, #8
+	lsr	\tmp, \arg, #8
+	beq	2f
+	mov	\arg, \tmp
 	sub \cnt, #8
 2:
-	lsr	\tmp, #4
-	cmp	\arg, \tmp
-	blo	3f
-	lsr	\arg, #4
+	lsr	\tmp, \arg, #4
+	beq	3f
+	mov	\arg, \tmp
 	sub \cnt, #4
 3:
+#if 1
+	lsr	\tmp, \arg, #2
+	beq	4f
+	mov	\arg, \tmp
+	sub \cnt, #2
+4:
+	lsr	\arg, #1
+	sub	\arg, \cnt, \arg
+	bx	lr
+#else
 	adr	\tmp, 4f
 	ldrb	\arg, [\arg, \tmp]
 	add	\arg, \cnt
@@ -108,7 +114,7 @@
 4:
 	.byte	4,3,2,2,1,1,1,1
 	.word	0, 0
-
+#endif
 .endm
 
 
