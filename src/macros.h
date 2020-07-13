@@ -6,9 +6,6 @@
  */
 
 
-#ifndef MACROS_H_
-#define MACROS_H_
-
 .macro	lsl64const	lo, hi, cnt, tmp
 
 .if \cnt == 1
@@ -104,6 +101,3 @@
 	sub	\arg, \cnt, \arg
 	bx	lr
 .endm
-
-
-#endif /* MACROS_H_ */

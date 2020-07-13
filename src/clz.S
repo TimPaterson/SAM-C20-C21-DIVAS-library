@@ -1,13 +1,13 @@
 
 /*
- * clz.S
+ * clz.s
  *
  * Created: 6/24/2020 9:51:10 AM
  *  Author: Tim
  */ 
 
 
-#include "macros.h"
+.include "macros.h"
 
 
 	.global	__clz_divas
@@ -26,6 +26,7 @@
 
 	.func	__clz_divas
 
+	.thumb_func
 __clz_divas:
 	CLZ	r5, r6, r7
 

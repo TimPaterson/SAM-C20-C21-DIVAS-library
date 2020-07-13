@@ -1,18 +1,18 @@
 
 /*
- * sqrt.S
+ * sqrt.s
  *
  * Created: 6/26/2020 3:03:11 PM
  *  Author: Tim
  */ 
  
 
+.include "macros.h"
+.include "Ieee64.h"
+.include "divas_asm.h"
+
+
 	.global	sqrt
-
-
-#include "macros.h"
-#include "Ieee64.h"
-#include "divas_asm.h"
 
 
 // 32-bit IEEE floating-point square root
@@ -23,12 +23,14 @@
 //	r1:r0 = root
 
 	.func	sqrt
+
+	.thumb_func
 sqrt:
 	push	{r4, r5, r6, lr}
 	lsl	r2, r1, #1		// clear input sign
 	lsr	r4, r2, #MANT_BITS_HI + 1	// input exponent
 	beq	Denormal
-	ldr	r3, ExpSpecial
+	ldr	r3, =#EXP_SPECIAL
 	cmp	r4, r3
 	beq	SpclExp
 	cmp	r1, #0
@@ -49,7 +51,7 @@ Normalized:
 	orr	r2, r3		// r2:r1 = input
 	// Result exponent is current exponent / 2
 	// Take out exponent bias since it's odd
-	ldr	r3, ExpBias
+	ldr	r3, =#EXP_BIAS
 	sub	r4, r3
 	// exp >>= 1
 	asr	r4, #1
@@ -208,23 +210,18 @@ ValRight:
 	b	FixExp
 
 SpclExp:
-	// r0 = input
+	// r1:r0 = input
 	// r4 = exponent, currently EXP_SPECIAL
-	lsl	r4, r0, #MANT_BITS_HI + 1
+	lsl	r4, r1, #MANT_BITS_HI + 1
+	orr	r4, r0
 	bne	Exit		// It's NAN, just return it
-	cmp	r0, #0
+	cmp	r1, #0
 	bpl	Exit		// Positive Infinity, return it
 	// Negative Infinity, return NAN
 ReturnNan:
-	ldr	r1, Nan
+	ldr	r1, =#NAN
 	mov	r0, #0
 Exit:
 	pop	{r4, r5, r6, pc}
 	
-	.align	2
-ExpSpecial:	.word	EXP_SPECIAL
-ExpBias:	.word	EXP_BIAS
-// Quiet NAN has MSB of mantissa set
-Nan:		.word	(EXP_SPECIAL << MANT_BITS_HI) | (1 << (MANT_BITS_HI - 1))
-
 	.endfunc

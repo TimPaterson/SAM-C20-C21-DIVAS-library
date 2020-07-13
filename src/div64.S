@@ -1,16 +1,17 @@
 
 /*
- * div64.S
+ * div64.s
  *
  * Created: 6/19/2020 2:27:09 PM
  *  Author: Tim
  */ 
  
 
-#include "macros.h"
+.include "macros.h"
 
 
 	.global	__div64_divas
+
 
 // Helper for 64-bit integer & floating point division
 //
@@ -30,16 +31,17 @@
 	.func	__div64_divas
 
 // Offset of variables in stack
-#define	QuoLo	0
-#define	QuoHi	4
+.set	QuoLo,	0
+.set	QuoHi,	4
 // denominator is accessed as 16-bit "digits"
-#define	Den0	8
-#define	Den1	10
-#define	Den2	12
-#define	Den3	14
-#define oDig	16
-#define NumExt	20
+.set	Den0,	8
+.set	Den1,	10
+.set	Den2,	12
+.set	Den3,	14
+.set	oDig,	16
+.set	NumExt,	20
 
+	.thumb_func
 __div64_divas:
 	mov	r6, r0
 	mov	r0, #0

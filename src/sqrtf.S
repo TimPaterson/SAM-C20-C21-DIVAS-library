@@ -1,18 +1,18 @@
 
 /*
- * sqrtf.S
+ * sqrtf.s
  *
  * Created: 6/26/2020 10:34:58 AM
  *  Author: Tim
  */ 
  
 
+.include "macros.h"
+.include "Ieee32.h"
+.include "divas_asm.h"
+
+
 	.global	sqrtf
-
-
-#include "macros.h"
-#include "Ieee32.h"
-#include "divas_asm.h"
 
 
 // 32-bit IEEE floating-point square root
@@ -23,6 +23,8 @@
 //	r0 = root
 
 	.func	sqrtf
+
+	.thumb_func
 sqrtf:
 	push	{r4, lr}
 	lsl	r1, r0, #1		// clear input sign
@@ -140,12 +142,8 @@ SpclExp:
 	bpl	Exit		// Positive Infinity, return it
 	// Negative Infinity, return NAN
 ReturnNan:
-	ldr	r0, Nan
+	ldr	r0, =#NAN
 Exit:
 	pop	{r4, pc}
 	
-	.align	2
-// Quiet NAN has MSB of mantissa set
-Nan:		.word	(EXP_SPECIAL << MANT_BITS) | (1 << (MANT_BITS - 1))
-
 	.endfunc

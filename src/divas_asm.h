@@ -6,27 +6,19 @@
  */ 
 
 
-#ifndef DIVAS_ASM_H_
-#define DIVAS_ASM_H_
-
-
 // DIVAS module base address on AHB and IOBUS
-#define DIVAS			0x48000000
-#define DIVAS_IOBUS		0x60000200
+.set	DIVAS,					0x48000000
+.set	DIVAS_IOBUS,			0x60000200
 
 // DIVAS registers
-#define REG_DIVAS_CTRLA         0x00
-#define REG_DIVAS_STATUS        0x04
-#define REG_DIVAS_DIVIDEND      0x08
-#define REG_DIVAS_DIVISOR       0x0C
-#define REG_DIVAS_RESULT        0x10
-#define REG_DIVAS_REM           0x14
-#define REG_DIVAS_SQRNUM        0x18
+.set	REG_DIVAS_CTRLA,        0x00
+.set	REG_DIVAS_STATUS,       0x04
+.set	REG_DIVAS_DIVIDEND,     0x08
+.set	REG_DIVAS_DIVISOR,      0x0C
+.set	REG_DIVAS_RESULT,       0x10
+.set	REG_DIVAS_REM,          0x14
+.set	REG_DIVAS_SQRNUM,       0x18
 
 // DIVAS control register A
-#define DIVAS_CTRLA_UNSIGNED	0
-#define DIVAS_CTRLA_SIGNED	1
-
-
-
-#endif /* DIVAS_ASM_H_ */
+.set	DIVAS_CTRLA_UNSIGNED,	0
+.set	DIVAS_CTRLA_SIGNED,		1

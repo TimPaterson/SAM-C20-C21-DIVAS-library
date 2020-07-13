@@ -1,16 +1,17 @@
 
 /*
- * uldivmod.S
+ * uldivmod.s
  *
  * Created: 6/18/2020 3:35:19 PM
  *  Author: Tim
  */ 
 
 
-#include "macros.h"
+.include "macros.h"
 
 
 	.global	__aeabi_uldivmod
+
 
 // 64-bit unsigned integer division & modulo
 //
@@ -26,6 +27,7 @@
 
 	.func	__aeabi_uldivmod
 
+	.thumb_func
 __aeabi_uldivmod:
 	push	{r4, r5, r6, r7, lr}
 	mov	r4, #0

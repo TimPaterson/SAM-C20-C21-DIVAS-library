@@ -1,17 +1,18 @@
 
 /*
- * fdiv.S
+ * fdiv.s
  *
  * Created: 6/22/2020 5:24:59 PM
  *  Author: Tim
  */ 
  
 
-#include "macros.h"
-#include "Ieee32.h"
+.include "macros.h"
+.include "Ieee32.h"
 
 
 	.global	__aeabi_fdiv
+
 
 // 32-bit IEEE floating-point division
 //
@@ -23,6 +24,7 @@
 
 	.func	__aeabi_fdiv
 
+	.thumb_func
 __aeabi_fdiv:
 	push	{r4, r5, r6, r7, lr}
 	lsl	r3, r1, #1	// clear denominator sign
@@ -288,11 +290,11 @@ DivByZero:
 	bic	r0, r2		// check numerator by clearing its sign
 	beq	ReturnNan	// 0 / 0, return NAN
 InfinityResult:
-	ldr	r0, Infinity
+	ldr	r0, =#INFINITY
 	b	SetSign
 
 ReturnNan:
-	ldr	r0, Nan
+	ldr	r0, =#NAN
 	b	SetSign
 
 ZeroQuo:
@@ -321,8 +323,8 @@ MaxQuo:
 	sub	r1, r2
 	// num <<= 16;
 	lsl	r1, #16
-	// quoDig = 0;
-	ldr	r3, MaxQuoVal
+	// quoDig = 2^16-1;
+	ldr	r3, =#0xFFFF
 	b	AddBack
 
 DenormalResult:
@@ -351,11 +353,5 @@ DenormalResult:
 ZeroResult:
 	mov	r0, #0
 	b	SetSign
-
-	.align	2
-MaxQuoVal:	.word	0xFFFF
-Infinity:	.word	EXP_SPECIAL << MANT_BITS
-// Quiet NAN has MSB of mantissa set
-Nan:		.word	(EXP_SPECIAL << MANT_BITS) | (1 << (MANT_BITS - 1))
 
 	.endfunc

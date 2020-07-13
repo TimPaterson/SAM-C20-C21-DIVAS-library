@@ -1,15 +1,17 @@
 
 /*
- * ldivmod.S
+ * ldivmod.s
  *
  * Created: 6/18/2020 2:40:47 PM
  *  Author: Tim
  */ 
 
  
-#include "macros.h"
+.include "macros.h"
+
 
 	.global	__aeabi_ldivmod
+
 
 // 64-bit signed integer division & modulo
 //
@@ -22,6 +24,7 @@
 
 	.func	__aeabi_ldivmod
 
+	.thumb_func
 __aeabi_ldivmod:
 	push	{r4, r5, lr}
 	asr	r4, r1, #31	// sign of numerator

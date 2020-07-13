@@ -1,12 +1,13 @@
 
 /*
- * uidiv.S
+ * uidiv.s
  *
  * Created: 6/12/2020 4:11:02 PM
  *  Author: Tim
  */ 
 
-#include "divas_asm.h"
+
+.include "divas_asm.h"
 
 
 // Basic driver for SAMC DIVAS hardware.
@@ -28,7 +29,9 @@
 
 	.func	__aeabi_idivmod
 
+	.thumb_func
 __aeabi_idivmod:
+	.thumb_func
 __aeabi_idiv:
 	mov	r2, #DIVAS_CTRLA_SIGNED
 	b	__divas_divmod
@@ -40,7 +43,9 @@ __aeabi_idiv:
 
 	.func	__aeabi_uidivmod
 
+	.thumb_func
 __aeabi_uidivmod:
+	.thumb_func
 __aeabi_uidiv:
 	mov	r2, #DIVAS_CTRLA_UNSIGNED
 	// fall into __divas_divmod

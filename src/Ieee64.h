@@ -6,18 +6,15 @@
  */ 
 
 
-#ifndef IEEE64_H_
-#define IEEE64_H_
-
-
 // IEEE double
-#define MANT_BITS		52
-#define MANT_BITS_HI	(MANT_BITS - 32)
-#define EXP_BITS		11
-#define EXP_BIAS		((1 << (EXP_BITS - 1)) - 1)
-#define EXP_MIN			(-EXP_BIAS + 1)
-#define EXP_SPECIAL		((1 << EXP_BITS) - 1)
-#define SIGN_BIT		(1LL << 63)
+.set	MANT_BITS,		52
+.set	MANT_BITS_HI,	(MANT_BITS - 32)
+.set	EXP_BITS,		11
+.set	EXP_BIAS,		((1 << (EXP_BITS - 1)) - 1)
+.set	EXP_MIN,		(-EXP_BIAS + 1)
+.set	EXP_SPECIAL,	((1 << EXP_BITS) - 1)
 
-
-#endif /* IEEE64_H_ */
+// Special values (high word)
+.set	INFINITY,		EXP_SPECIAL << MANT_BITS_HI
+// Quiet NAN has MSB of mantissa set
+.set	NAN,			INFINITY | (1 << (MANT_BITS_HI - 1))

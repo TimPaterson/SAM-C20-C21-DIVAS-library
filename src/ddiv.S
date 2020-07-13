@@ -1,6 +1,6 @@
 
 /*
- * ddiv.S
+ * ddiv.s
  *
  * Created: 6/21/2020 11:33:44 AM
  *  Author: Tim
@@ -23,6 +23,7 @@
 
 	.func	__aeabi_ddiv
 
+	.thumb_func
 __aeabi_ddiv:
 	push	{r4, r5, r6, r7, lr}
 	lsl	r5, r3, #1	// clear denominator sign
@@ -39,7 +40,7 @@ __aeabi_ddiv:
 	and	r6, r7
 	mov	r12, r6		// Save sign
 
-	ldr	r6, ExpSpecial
+	ldr	r6, =#EXP_SPECIAL
 
 	// r1:r0 = numerator
 	// r3:r2 = denominator
@@ -112,11 +113,11 @@ NumNormalized:
 	add	r5, #1
 CheckSpecialRes:
 	// exp += EXP_BIAS - 1
-	ldr	r4, ExpBiasM1
+	ldr	r4, =#EXP_BIAS - 1
 	add	r5, r4
 	ble	DenormalResult
 	// if (exp >= EXP_SPECIAL)
-	ldr	r4, ExpSpecial
+	ldr	r4, =#EXP_SPECIAL
 	cmp	r5, r4
 	bhs	InfinityResult
 Round:
@@ -297,11 +298,11 @@ DivByZero:
 	orr	r6, r0
 	beq	ReturnNan	// 0 / 0, return NAN
 InfinityResult:
-	ldr	r1, Infinity
+	ldr	r1, =#INFINITY
 	b	LowZero
 
 ReturnNan:
-	ldr	r1, Nan
+	ldr	r1, =#NAN
 	b	LowZero
 
 DenormalResult:
@@ -343,12 +344,5 @@ ZeroResult:
 LowZero:
 	mov	r0, #0
 	b	SetSign
-
-	.align	2
-ExpSpecial:	.word	EXP_SPECIAL
-ExpBiasM1:	.word	EXP_BIAS - 1
-Infinity:	.word	EXP_SPECIAL << MANT_BITS_HI
-// Quiet NAN has MSB of mantissa set
-Nan:		.word	(EXP_SPECIAL << MANT_BITS_HI) | (1 << (MANT_BITS_HI - 1))
 
 	.endfunc
