@@ -70,12 +70,11 @@ NumNormalized:
 	lsr	r5, #16
 	lsl	r6, r1, #(32 - (MANT_BITS + 1))
 	eor	r6, r5		// clear low bits
-	// mask numerator to mantissa, adding two bits for 
-	// rounding & sticky bits
+	// mask numerator to mantissa, adding one rounding bit
 	lsl	r0, #(32 - (MANT_BITS + 1))
-	lsr	r0, #(32 - (MANT_BITS + 1)  - 2)	
+	lsr	r0, #(32 - (MANT_BITS + 1)  - 1)	
 
-	// r0 = numerator with 2 extra bits
+	// r0 = numerator with 1 extra bit
 	// r4 = result exponent, unbiased
 	// r5 = low 16-bit denominator "digit"
 	// r6 = high 16-bit denominator "digit"
@@ -147,23 +146,27 @@ QuoGood2:
 	lsl	r0, r7, #16
 	orr	r0, r3
 
-	// See if carried into next bit
-	lsl	r5, r0, #(32 - (MANT_BITS + 2 + 2))
-	bpl	SetSticky
-	// sticky |= quo & 1;
-	mov	r3, #1
-	and	r3, r0
-	orr	r1, r3
+	// r0 = quotient
+	// r1 = remainder (sticky bits)
+	// r4 = exponent
+	// r12 = final sign
+	//
+	// See if quotient carried into next bit
+	lsl	r5, r0, #(32 - (MANT_BITS + 2 + 1))
+	bpl	CheckSpecialRes
+	// sticky |= quo != 0;
+	lsl	r3, r0, #31	// mask to quotient LSB
+	orr	r1, r3		// save in sticky bits
 	// quo >>= 1;
 	lsr	r0, #1
 	// exp++;
 	add	r4, #1
-SetSticky:
-	// quo |= sticky != 0;
-	sub	r5, r1, #1
-	sbc	r1, r5
-	orr	r0, r1
 CheckSpecialRes:
+	// r0 = result mantissa w/rounding bit
+	// r1 = sticky bits
+	// r4 = exponent
+	// r12 = final sign
+	//
 	// exp += EXP_BIAS - 1
 	add	r4, #(EXP_BIAS - 1)
 	ble	DenormalResult
@@ -171,26 +174,27 @@ CheckSpecialRes:
 	cmp	r4, #EXP_SPECIAL
 	bhs	InfinityResult
 Round:
-	// r0 = result mantissa w/rounding & sticky bits
+	// r0 = result mantissa w/rounding bit
+	// r1 = sticky bits
 	// r4 = exponent
 	// r12 = final sign
-	// To round even, test mantissa LSB and sticky bits at once
-	// if (quo & 0b101)
-	mov	r5, #5
-	tst	r0, r5
-	beq	1f
-	// quo += 0b10;		// add to rounding bit
-	add	r0, #2
+	//
+	cmp	r1, #0		// test sticky bits
+	bne	1f		// non-zero remainder, round up
+	lsl	r5, r0, #30	// test LSB for round even
+	bpl	2f
 1:
-	// Remove round & sticky bits
-	// quo >>= 2;
-	lsr	r0, #2
+	add	r0, #1		// add to rounding bit
+2:
+
+	// Remove rounding bit
+	// quo >>= 1;
+	lsr	r0, #1
 
 	// Zero implied bit
 	// quo &= ~(1LL << MANT_BITS);
-	mov	r5, #1
-	lsl	r5, #MANT_BITS
-	bic	r0, r5
+	lsl	r0, #EXP_BITS + 1
+	lsr	r0, #EXP_BITS + 1
 	// quo |= exp << MANT_BITS
 	lsl	r4, #MANT_BITS
 	orr	r0, r4
@@ -293,10 +297,10 @@ ReturnNan:
 
 ZeroQuo:
 	// Quotient is just first digit. Put in position, leaving
-	// rounding & sticky bits
+	// rounding bit
 	lsl	r0, r7, #16
 	// See if carried into next bit
-	lsl	r5, r0, #(32 - (MANT_BITS + 2 + 2))
+	lsl	r5, r0, #(32 - (MANT_BITS + 2 + 1))
 	bpl	CheckSpecialRes
 	// quo >>= 1;
 	lsr	r0, #1
@@ -322,7 +326,8 @@ MaxQuo:
 	b	AddBack
 
 DenormalResult:
-	// r0 = result mantissa w/rounding & sticky bits
+	// r0 = result mantissa w/rounding bit
+	// r1 = sticky bits
 	// r4 = exponent
 	// r12 = final sign
 	mov	r2, #MANT_BITS
@@ -330,18 +335,15 @@ DenormalResult:
 	bmi	ZeroResult
 	// Denormalize the result
 	// First save the bits we're shifting off
-	// sticky = quo << (exp + 31)
+	// sticky |= quo << (exp + 31)
 	add	r4, #31
-	mov	r1, r0
-	lsl	r1, r4
+	mov	r2, r0
+	lsl	r2, r4
+	orr	r1, r2
 	// quo >>= 32 - (exp + 31)
 	sub	r4, #32
 	neg	r4, r4
 	lsr	r0, r4
-	// quo |= sticky != 0;
-	sub	r5, r1, #1
-	sbc	r1, r5
-	orr	r0, r1
 	// exp = 0
 	mov	r4, #0
 	b	Round

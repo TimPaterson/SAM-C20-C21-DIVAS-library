@@ -79,7 +79,7 @@
 .endm
 
 .macro	CLZ		arg, cnt, tmp
-	mov	\cnt, #31		// set to 28 for alternate, below
+	mov	\cnt, #31
 	lsr	\tmp, \arg, #16
 	beq	1f
 	mov	\arg, \tmp
@@ -95,7 +95,6 @@
 	mov	\arg, \tmp
 	sub \cnt, #4
 3:
-#if 1
 	lsr	\tmp, \arg, #2
 	beq	4f
 	mov	\arg, \tmp
@@ -104,17 +103,6 @@
 	lsr	\arg, #1
 	sub	\arg, \cnt, \arg
 	bx	lr
-#else
-	adr	\tmp, 4f
-	ldrb	\arg, [\arg, \tmp]
-	add	\arg, \cnt
-	bx	lr
-
-	.align	2
-4:
-	.byte	4,3,2,2,1,1,1,1
-	.word	0, 0
-#endif
 .endm
 
 

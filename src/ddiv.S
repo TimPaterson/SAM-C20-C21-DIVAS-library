@@ -74,9 +74,9 @@ NumNormalized:
 	// mask numerator to mantissa
 	lsl	r1, #(64 - (MANT_BITS + 1))
 	lsr	r1, #(64 - (MANT_BITS + 1))	
-	// add rounding & sticky bits
-	// num <<= 2;
-	lsl64const	r0, r1, 2
+	// add rounding bit
+	// num <<= 1;
+	lsl64const	r0, r1, 1
 
 	// Call 64-bit divide helper
 	push	{r4}		// save exponent
@@ -95,49 +95,48 @@ NumNormalized:
 	pop	{r5}		// restore exponent
 	orr	r2, r3		// remainder is sticky bit
 
+	// r1:r0 = result mantissa w/rounding & sticky bits
+	// r2 = sticky bits
+	// r5 = exponent
+	// r12 = final sign
+	//
 	// See if carried into next bit
-	lsl	r4, r1, #(64 - (MANT_BITS + 2 + 2))
-	bpl	SetSticky
-	// sticky |= quo & 1;
-	mov	r3, #1
-	and	r3, r0
-	orr	r2, r3
+	lsl	r4, r1, #(64 - (MANT_BITS + 2 + 1))
+	bpl	CheckSpecialRes
+	// sticky |= quo != 0;
+	lsl	r3, r0, #31	// mask to quotient LSB
+	orr	r2, r3		// save in sticky bits
 	// quo >>= 1;
 	lsr64const	r0, r1, 1, r4
 	// exp++;
 	add	r5, #1
-SetSticky:
-	// quo |= sticky != 0;
-	sub	r4, r2, #1
-	sbc	r2, r4
-	orr	r0, r2
+CheckSpecialRes:
 	// exp += EXP_BIAS - 1
 	ldr	r4, ExpBiasM1
 	add	r5, r4
 	ble	DenormalResult
 	// if (exp >= EXP_SPECIAL)
-	lsl	r4, #1
-	add	r4, #(EXP_SPECIAL - (EXP_BIAS - 1) * 2)
+	ldr	r4, ExpSpecial
 	cmp	r5, r4
 	bhs	InfinityResult
 Round:
 	// r1:r0 = result mantissa w/rounding & sticky bits
+	// r2 = sticky bits
 	// r5 = exponent
 	// r12 = final sign
-	// To round even, test mantissa LSB and sticky bits at once
-	// if (quo & 0b101)
-	mov	r4, #5
-	tst	r0, r4
-	beq	1f
-	// quo += 0b10;		// add to rounding bit
-	mov	r3, #2
-	mov	r4, #0
-	add	r0, r3
-	adc	r1, r4
+	//
+	cmp	r2, #0		// test sticky bits
+	bne	1f		// non-zero remainder, round up
+	lsl	r4, r0, #30	// test LSB for round even
+	bpl	2f
 1:
-	// Remove round & sticky bits
-	// quo >>= 2;
-	lsr64const	r0, r1, 2, r4
+	mov	r4, #0
+	add	r0, #1		// add to rounding bit
+	adc	r1, r4
+2:
+	// Remove rounding bit
+	// quo >>= 1;
+	lsr64const	r0, r1, 1, r4
 
 	// Zero implied bit
 	// quo &= ~(1LL << MANT_BITS);
@@ -307,25 +306,26 @@ ReturnNan:
 
 DenormalResult:
 	// r1:r0 = result mantissa w/rounding & sticky bits
+	// r2 = sticky bits
 	// r5 = exponent
 	// r12 = final sign
-	mov	r2, #MANT_BITS
-	add	r2, r5
+	mov	r3, #MANT_BITS
+	add	r3, r5
 	bmi	ZeroResult
 	// Denormalize the result
 	// First save the bits we're shifting off
 	// sticky = quo << (exp + 63)
-	mov	r4, #0		// extended sticky bits
 	add	r5, #31
 	bpl	BigDenormal
 	// quo >>= 32
-	mov	r4, r0
+	orr	r2, r0		// combine sticky bits
 	mov	r0, r1
 	mov	r1, #0
 	add	r5, #32
 BigDenormal:
-	mov	r2, r0
-	lsl	r2, r5		// Bits we're discarding
+	mov	r3, r0
+	lsl	r3, r5		// Bits we're discarding
+	orr	r2 ,r3		// combine sticky bits
 	mov	r3, r1
 	lsl	r3, r5		// Upper bits for low half
 	// quo >>= 32 - (exp + 31)
@@ -334,11 +334,6 @@ BigDenormal:
 	lsr	r0, r5
 	lsr	r1, r5
 	orr	r0, r3
-	// quo |= sticky != 0;
-	orr	r2, r4		// combine sticky bits
-	sub	r6, r2, #1
-	sbc	r2, r6
-	orr	r0, r2
 	// exp = 0
 	mov	r5, #0
 	b	Round

@@ -383,6 +383,41 @@ void DivFltTest()
 	printf("23: %g\n", DivFlt(flt, 4));
 	printf("24: %g\n", DivFlt(flt, 8));
 	printf("25: %g\n", DivFlt(flt, 16));
+
+	// IEEE rounding test. Denormals used for ease
+	// in creating bit patterns in LSBs.
+	float scale = 1024 * 1024 * 1024.0f;
+	printf("Rounding inexact\n");
+	for (int i = 1; i < 8; i++)
+	{
+		flt = (i + 0.1f) / scale;
+		flt = DivFlt(DivFlt(flt, TwoTo120 * 2), 1 / TwoTo120);
+		printf("%g, ", flt * scale);
+	}
+	printf("\nRounding exact\n");
+	for (int i = 1; i < 8; i++)
+	{
+		flt = i / scale;
+		flt = DivFlt(DivFlt(flt, TwoTo120 * 2), 1 / TwoTo120);
+		printf("%g, ", flt * scale);
+	}
+	float one = 0xFFFFFF / (1024 * 1024 * 16.0f);	// 1 LSB less than 1
+	printf("\nNear one: %.8f\n", one);
+	printf("Rounding inexact full denominator\n");
+	for (int i = 1; i < 8; i++)
+	{
+		flt = (i + 0.1f) / scale;
+		flt = DivFlt(DivFlt(flt, TwoTo120 * 2 * one), 1 / TwoTo120);
+		printf("%g, ", flt * scale);
+	}
+	printf("\nRounding full denominator\n");
+	for (int i = 1; i < 8; i++)
+	{
+		flt = i / scale;
+		flt = DivFlt(DivFlt(flt, TwoTo120 * 2 * one), 1 / TwoTo120);
+		printf("%g, ", flt * scale);
+	}
+	printf("\n");
 }
 
 void DivDblTest()
@@ -455,6 +490,41 @@ void DivDblTest()
 	printf("52: %g\n", DivDbl(dbl, 4));
 	printf("53: %g\n", DivDbl(dbl, 8));
 	printf("54: %g\n", DivDbl(dbl, 16));
+
+	// IEEE rounding test. Denormals used for ease
+	// in creating bit patterns in LSBs.
+	double scale = 1024.0 * 1024 * 1024 * 1024 * 1024 * 8;
+	printf("Rounding inexact\n");
+	for (int i = 1; i < 8; i++)
+	{
+		dbl = (i + 0.1) / scale;
+		dbl = DivDbl(DivDbl(dbl, TwoTo1022 * 2), 1 / TwoTo1022);
+		printf("%g, ", dbl * scale);
+	}
+	printf("\nRounding exact\n");
+	for (int i = 1; i < 8; i++)
+	{
+		dbl = i / scale;
+		dbl = DivDbl(DivDbl(dbl, TwoTo1022 * 2), 1 / TwoTo1022);
+		printf("%g, ", dbl * scale);
+	}
+	double one = 0x1FFFFFFFFFFFFFLL / scale;	// 1 LSB less than 1
+	printf("\nNear one: %.18f\n", one);
+	printf("Rounding inexact full denominator\n");
+	for (int i = 1; i < 8; i++)
+	{
+		dbl = (i + 0.1) / scale;
+		dbl = DivDbl(DivDbl(dbl, TwoTo1022 * 2 * one), 1 / TwoTo1022);
+		printf("%g, ", dbl * scale);
+	}
+	printf("\nRounding full denominator\n");
+	for (int i = 1; i < 8; i++)
+	{
+		dbl = i / scale;
+		dbl = DivDbl(DivDbl(dbl, TwoTo1022 * 2 * one), 1 / TwoTo1022);
+		printf("%g, ", dbl * scale);
+	}
+	printf("\n");
 }
 
 void SqrtFltTest()
