@@ -175,20 +175,16 @@ CheckSpecialRes:
 	// if (exp >= EXP_SPECIAL)
 	cmp	r4, #EXP_SPECIAL
 	bhs	InfinityResult
-Round:
+
 	// r0 = result mantissa w/rounding bit
 	// r1 = sticky bits
 	// r4 = exponent
 	// r12 = final sign
 	//
-	cmp	r1, #0		// test sticky bits
-	bne	1f		// non-zero remainder, round up
-	lsl	r5, r0, #30	// test LSB for round even
-	bpl	2f
-1:
+	// Result can't be exactly halfway, so just round it up
+Round:
 	add	r0, #1		// add to rounding bit
-2:
-
+NoRound:
 	// Remove rounding bit
 	// quo >>= 1;
 	lsr	r0, #1
@@ -348,6 +344,11 @@ DenormalResult:
 	lsr	r0, r4
 	// exp = 0
 	mov	r4, #0
+	// Round, checking for round-even if exactly halfway
+	cmp	r1, #0		// test sticky bits
+	bne	Round		// non-zero remainder, round up
+	lsl	r5, r0, #30	// test LSB for round even
+	bpl	NoRound
 	b	Round
 
 ZeroResult:

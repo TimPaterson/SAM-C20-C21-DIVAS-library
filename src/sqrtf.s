@@ -96,19 +96,10 @@ RootBit32:
 	sub	r3, #1		// count down
 	bne	Root32
 Root32Done:
-	cmp	r4, #0
-	bne	RoundUp
-	lsl	r4, r0, #29	// test bit 2 for round even
-	bpl	NoRound
-RoundUp:
+	// Result can't be exactly halfway, so just round it up
 	add	r0, #2		// add to rounding bit
-NoRound:
-	lsr	r0, #2		// remove rounding & sticky bits
-	// Zero implied bit
-	// root &= ~(1 << MANT_BITS);
-	mov	r3, #1
-	lsl	r3, #MANT_BITS
-	bic	r0, r3
+	lsl	r0, #EXP_BITS + 1 - 2	// Zero implied bit
+	lsr	r0, #EXP_BITS + 1	// Normalize
 	// root |= exp << MANT_BITS
 	lsl	r1, #MANT_BITS
 	orr	r0, r1

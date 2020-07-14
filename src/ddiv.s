@@ -7,11 +7,12 @@
  */ 
 
  
-#include "macros.h"
-#include "Ieee64.h"
+.include "macros.h"
+.include "Ieee64.h"
 
 
 	.global	__aeabi_ddiv
+
 
 // 64-bit IEEE floating-point division
 //
@@ -21,137 +22,7 @@
 // Exit:
 //	r1:r0 = quotient
 
-	.func	__aeabi_ddiv
-
-	.thumb_func
-__aeabi_ddiv:
-	push	{r4, r5, r6, r7, lr}
-	lsl	r5, r3, #1	// clear denominator sign
-	lsr	r5, #MANT_BITS_HI + 1	// denominator exponent
-
-	lsl	r4, r1, #1	// clear numerator sign
-	lsr	r4, #MANT_BITS_HI + 1	// numerator exponent
-
-	// compute final sign
-	mov	r7, #1
-	lsl	r7, #31		// sign position
-	mov	r6, r1
-	eor	r6, r3
-	and	r6, r7
-	mov	r12, r6		// Save sign
-
-	ldr	r6, =#EXP_SPECIAL
-
-	// r1:r0 = numerator
-	// r3:r2 = denominator
-	// r4 = numerator exponent
-	// r5 = denominator exponent
-	// r6 = EXP_SPECIAL
-	// r7 = 0x80000000 (sign bit position)
-	// r12 = final sign
-
-	cmp	r5, r6
-	beq	DenSpclExp
-	cmp	r4, r6
-	beq	NumSpclExp
-
-	cmp	r5, #0
-	beq	DenZeroExp
-DenNormalized:
-	cmp	r4, #0
-	beq	NumZeroExp
-NumNormalized:
-
-	sub	r4, r5		// compute exponent
-
-	// Set implied bit
-	lsr	r7, #EXP_BITS	// move back to implied bit position
-	orr	r1, r7
-	orr	r3, r7
-
-	// Normalize
-	// den <<= 64 - (MANT_BITS + 1);
-	lsl64const	r2, r3, (64 - (MANT_BITS + 1)), r5
-	// mask numerator to mantissa
-	lsl	r1, #(64 - (MANT_BITS + 1))
-	lsr	r1, #(64 - (MANT_BITS + 1))	
-	// add rounding bit
-	// num <<= 1;
-	lsl64const	r0, r1, 1
-
-	// Call 64-bit divide helper
-	push	{r4}		// save exponent
-	mov	r4, #6		// compute 4 digits
-	mov	r5, #0		// no extension
-
-	// r1:r0 = num, scaled numerator
-	// r3:r2 = den, normalized denominator
-	// r4 = oDig, address offset of first quotient digit: 0,2,4, or 6
-	// r5 = numExt, numerator extension
-	bl	__div64_divas
-	// r1:r0 = quotient
-	// r3:r2 = scaled remainder
-	// no other registers preserved
-
-	pop	{r5}		// restore exponent
-	orr	r2, r3		// remainder is sticky bit
-
-	// r1:r0 = result mantissa w/rounding & sticky bits
-	// r2 = sticky bits
-	// r5 = exponent
-	// r12 = final sign
-	//
-	// See if carried into next bit
-	lsl	r4, r1, #(64 - (MANT_BITS + 2 + 1))
-	bpl	CheckSpecialRes
-	// sticky |= quo != 0;
-	lsl	r3, r0, #31	// mask to quotient LSB
-	orr	r2, r3		// save in sticky bits
-	// quo >>= 1;
-	lsr64const	r0, r1, 1, r4
-	// exp++;
-	add	r5, #1
-CheckSpecialRes:
-	// exp += EXP_BIAS - 1
-	ldr	r4, =#EXP_BIAS - 1
-	add	r5, r4
-	ble	DenormalResult
-	// if (exp >= EXP_SPECIAL)
-	ldr	r4, =#EXP_SPECIAL
-	cmp	r5, r4
-	bhs	InfinityResult
-Round:
-	// r1:r0 = result mantissa w/rounding & sticky bits
-	// r2 = sticky bits
-	// r5 = exponent
-	// r12 = final sign
-	//
-	cmp	r2, #0		// test sticky bits
-	bne	1f		// non-zero remainder, round up
-	lsl	r4, r0, #30	// test LSB for round even
-	bpl	2f
-1:
-	mov	r4, #0
-	add	r0, #1		// add to rounding bit
-	adc	r1, r4
-2:
-	// Remove rounding bit
-	// quo >>= 1;
-	lsr64const	r0, r1, 1, r4
-
-	// Zero implied bit
-	// quo &= ~(1LL << MANT_BITS);
-	mov	r4, #1
-	lsl	r4, #MANT_BITS_HI
-	bic	r1, r4
-	// quo |= exp << MANT_BITS
-	lsl	r5, #MANT_BITS_HI
-	orr	r1, r5
-SetSign:
-	// quo |= sgn;
-	mov	r4, r12		// Get sign
-	orr	r1, r4
-	pop	{r4, r5, r6, r7, pc}
+	.func	__aeabi_ddiv	// entry point a ways down
 
 DenSpclExp:
 	// r1:r0 = numerator
@@ -305,6 +176,140 @@ ReturnNan:
 	ldr	r1, =#NAN
 	b	LowZero
 
+ZeroResult:
+	mov	r1, #0
+LowZero:
+	mov	r0, #0
+	b	SetSign
+
+
+	.thumb_func
+__aeabi_ddiv:
+	push	{r4, r5, r6, r7, lr}
+	lsl	r5, r3, #1	// clear denominator sign
+	lsr	r5, #MANT_BITS_HI + 1	// denominator exponent
+
+	lsl	r4, r1, #1	// clear numerator sign
+	lsr	r4, #MANT_BITS_HI + 1	// numerator exponent
+
+	// compute final sign
+	mov	r7, #1
+	lsl	r7, #31		// sign position
+	mov	r6, r1
+	eor	r6, r3
+	and	r6, r7
+	mov	r12, r6		// Save sign
+
+	ldr	r6, =#EXP_SPECIAL
+
+	// r1:r0 = numerator
+	// r3:r2 = denominator
+	// r4 = numerator exponent
+	// r5 = denominator exponent
+	// r6 = EXP_SPECIAL
+	// r7 = 0x80000000 (sign bit position)
+	// r12 = final sign
+
+	cmp	r5, r6
+	beq	DenSpclExp
+	cmp	r4, r6
+	beq	NumSpclExp
+
+	cmp	r5, #0
+	beq	DenZeroExp
+DenNormalized:
+	cmp	r4, #0
+	beq	NumZeroExp
+NumNormalized:
+
+	sub	r4, r5		// compute exponent
+
+	// Set implied bit
+	lsr	r7, #EXP_BITS	// move back to implied bit position
+	orr	r1, r7
+	orr	r3, r7
+
+	// Normalize
+	// den <<= 64 - (MANT_BITS + 1);
+	lsl64const	r2, r3, (64 - (MANT_BITS + 1)), r5
+	// mask numerator to mantissa
+	lsl	r1, #(64 - (MANT_BITS + 1))
+	lsr	r1, #(64 - (MANT_BITS + 1))	
+	// add rounding bit
+	// num <<= 1;
+	lsl64const	r0, r1, 1
+
+	// Call 64-bit divide helper
+	push	{r4}		// save exponent
+	mov	r4, #6		// compute 4 digits
+	mov	r5, #0		// no extension
+
+	// r1:r0 = num, scaled numerator
+	// r3:r2 = den, normalized denominator
+	// r4 = oDig, address offset of first quotient digit: 0,2,4, or 6
+	// r5 = numExt, numerator extension
+	bl	__div64_divas
+	// r1:r0 = quotient
+	// r3:r2 = scaled remainder
+	// no other registers preserved
+
+	pop	{r5}		// restore exponent
+	orr	r2, r3		// remainder is sticky bit
+
+	// r1:r0 = result mantissa w/rounding & sticky bits
+	// r2 = sticky bits
+	// r5 = exponent
+	// r12 = final sign
+	//
+	// See if carried into next bit
+	lsl	r4, r1, #(64 - (MANT_BITS + 2 + 1))
+	bpl	CheckSpecialRes
+	// sticky |= quo != 0;
+	lsl	r3, r0, #31	// mask to quotient LSB
+	orr	r2, r3		// save in sticky bits
+	// quo >>= 1;
+	lsr64const	r0, r1, 1, r4
+	// exp++;
+	add	r5, #1
+CheckSpecialRes:
+	// exp += EXP_BIAS - 1
+	ldr	r4, =#EXP_BIAS - 1
+	add	r5, r4
+	ble	DenormalResult
+	// if (exp >= EXP_SPECIAL)
+	ldr	r4, =#EXP_SPECIAL
+	cmp	r5, r4
+	bhs	InfinityResult
+
+	// r1:r0 = result mantissa w/rounding & sticky bits
+	// r2 = sticky bits
+	// r5 = exponent
+	// r12 = final sign
+	//
+	// Result can't be exactly halfway, so just round it up
+Round:
+	mov	r4, #0
+	add	r0, #1		// add to rounding bit
+	adc	r1, r4
+NoRound:
+	// Remove rounding bit
+	// quo >>= 1;
+	lsr64const	r0, r1, 1, r4
+
+	// Zero implied bit
+	// quo &= ~(1LL << MANT_BITS);
+	mov	r4, #1
+	lsl	r4, #MANT_BITS_HI
+	bic	r1, r4
+	// quo |= exp << MANT_BITS
+	lsl	r5, #MANT_BITS_HI
+	orr	r1, r5
+SetSign:
+	// quo |= sgn;
+	mov	r4, r12		// Get sign
+	orr	r1, r4
+	pop	{r4, r5, r6, r7, pc}
+
 DenormalResult:
 	// r1:r0 = result mantissa w/rounding & sticky bits
 	// r2 = sticky bits
@@ -337,12 +342,10 @@ BigDenormal:
 	orr	r0, r3
 	// exp = 0
 	mov	r5, #0
+	cmp	r2, #0		// test sticky bits
+	bne	Round		// non-zero remainder, round up
+	lsl	r4, r0, #30	// test LSB for round even
+	bpl	NoRound
 	b	Round
-
-ZeroResult:
-	mov	r1, #0
-LowZero:
-	mov	r0, #0
-	b	SetSign
 
 	.endfunc

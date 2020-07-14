@@ -146,17 +146,13 @@ RootBit64:
 	sub	r2, #1		// count down
 	bne	Root64
 Root64Done:
-	orr	r5, r3
-	bne	RoundUp		// non-zero remainder, round up
-	lsl	r5, r0, #29	// test bit 2 for round even
-	bpl	NoRound
-RoundUp:
+	// Result can't be exactly halfway, so just round it up
 	add	r0, #2		// add to rounding bit
 	adc	r1, r2
-NoRound:
-	// remove rounding & sticky bits
+	// remove rounding bit & normalize
 	lsr64const	r0, r1, 2, r3
 	// Zero implied bit
+
 	// root &= ~(1 << MANT_BITS);
 	mov	r3, #1
 	lsl	r3, #MANT_BITS_HI
