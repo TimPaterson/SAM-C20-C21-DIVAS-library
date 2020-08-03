@@ -183,15 +183,40 @@
     <Compile Include="Device_Startup\startup_samc21.c">
       <SubType>compile</SubType>
     </Compile>
+    <Compile Include="FunctionTest.c">
+      <SubType>compile</SubType>
+    </Compile>
+    <Compile Include="FunctionTest.h">
+      <SubType>compile</SubType>
+    </Compile>
+    <Compile Include="include\sam_spec.h">
+      <SubType>compile</SubType>
+    </Compile>
+    <Compile Include="include\stdio.h">
+      <SubType>compile</SubType>
+    </Compile>
     <Compile Include="main.c">
       <SubType>compile</SubType>
     </Compile>
     <Compile Include="TestCase.c">
       <SubType>compile</SubType>
     </Compile>
+    <Compile Include="TestCase.h">
+      <SubType>compile</SubType>
+    </Compile>
+    <Compile Include="Timer.h">
+      <SubType>compile</SubType>
+    </Compile>
+    <Compile Include="TimeTest.c">
+      <SubType>compile</SubType>
+    </Compile>
+    <Compile Include="TimeTest.h">
+      <SubType>compile</SubType>
+    </Compile>
   </ItemGroup>
   <ItemGroup>
     <Folder Include="Device_Startup\" />
+    <Folder Include="include\" />
   </ItemGroup>
   <ItemGroup>
     <None Include="Device_Startup\samc21g17a_flash.ld">
