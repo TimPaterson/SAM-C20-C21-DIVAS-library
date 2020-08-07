@@ -11,11 +11,17 @@
 #include "stdio.h"
 #include "FunctionTest.h"
 #include "TimeTest.h"
+#include "TestCase.h"
+#include <stdbool.h>
+
+#undef getchar	// let's use function version
 
 
 // Set up clock speed, baud rate
 #define F_CPU		48000000
-#define BAUD_RATE	500000
+#define BAUD_RATE	1000000
+
+void ReceiveCase();
 
 
 //*********************************************************************
@@ -128,13 +134,18 @@ void WriteByte(void *pv, char c)
 	SERCOM3->USART.DATA.reg = c;
 }
 
+inline bool IsByteReady()
+{
+	return SERCOM3->USART.INTFLAG.bit.RXC;
+}
+
 int ReadByte(void *pv)
 {
-	while (!SERCOM3->USART.INTFLAG.bit.RXC);
+	while (!IsByteReady());
 	return SERCOM3->USART.DATA.reg;
 }
 
-FILE SercomIo = FDEV_SETUP_STREAM(WriteByte, ReadByte, _FDEV_SETUP_RW | _FDEV_SETUP_CRLF);
+FILE SercomIo = FDEV_SETUP_STREAM(WriteByte, ReadByte, _FDEV_SETUP_RW);
 
 FDEV_STANDARD_STREAMS(&SercomIo, &SercomIo);	// stdout, stdin
 
@@ -151,6 +162,20 @@ int main(void)
 	printf("\nStarting up\n");
     while (1)
     {
+		if (IsByteReady())
+		{
+			char	ch;
+
+			ch = getchar();
+			if (ch == ':')
+				ReceiveCase();
+			else
+				putchar(ch);
+
+			//printf("%llu  %llu\r\n", DivU64(0x12ffffffffffff, 0x1fffffffffffff), ModU64(0x12ffffffffffff, 0x1fffffffffffff));
+		}
+
+
 	/*
 		// for size comparison
 		// enable desired functions
@@ -164,9 +189,11 @@ int main(void)
 		DivI64(1,2);
 	*/
 
+	/*
 		FunctionTest();
 		TimeTest();
 
-		ReadByte(NULL);		// wait for input
+		getchar();		// wait for input
+	*/
     }
 }

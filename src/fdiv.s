@@ -74,7 +74,7 @@ NumNormalized:
 	eor	r6, r5		// clear low bits
 	// mask numerator to mantissa, adding one rounding bit
 	lsl	r0, #(32 - (MANT_BITS + 1))
-	lsr	r0, #(32 - (MANT_BITS + 1)  - 1)	
+	lsr	r0, #(32 - (MANT_BITS + 1) - 1)	
 
 	// r0 = numerator with 1 extra bit
 	// r4 = result exponent, unbiased
@@ -119,11 +119,6 @@ QuoGood1:
 	// if (num >= (den << 16))
 	cmp	r1, r6
 	bhs	MaxQuo
-	// if (num < den)
-	lsr	r3, r6, #16
-	cmp	r1, r3
-	blo	ZeroQuo
-
 	// Compute 16-bit "digit" guess
 	mov	r0, r1
 	lsr	r1, r6, #16	// move digit to low half
@@ -156,7 +151,7 @@ QuoGood2:
 	// See if quotient carried into next bit
 	lsl	r5, r0, #(32 - (MANT_BITS + 2 + 1))
 	bpl	CheckSpecialRes
-	// sticky |= quo != 0;
+	// sticky |= quo & 1;
 	lsl	r3, r0, #31	// mask to quotient LSB
 	orr	r1, r3		// save in sticky bits
 	// quo >>= 1;
@@ -182,9 +177,8 @@ CheckSpecialRes:
 	// r12 = final sign
 	//
 	// Result can't be exactly halfway, so just round it up
-Round:
 	add	r0, #1		// add to rounding bit
-NoRound:
+RoundDone:
 	// Remove rounding bit
 	// quo >>= 1;
 	lsr	r0, #1
@@ -293,19 +287,6 @@ ReturnNan:
 	ldr	r0, =#NAN
 	b	SetSign
 
-ZeroQuo:
-	// Quotient is just first digit. Put in position, leaving
-	// rounding bit
-	lsl	r0, r7, #16
-	// See if carried into next bit
-	lsl	r5, r0, #(32 - (MANT_BITS + 2 + 1))
-	bpl	CheckSpecialRes
-	// quo >>= 1;
-	lsr	r0, #1
-	// exp++;
-	add	r4, #1
-	b	CheckSpecialRes
-
 MaxQuo:
 	// High 16 bits of numerator equal denominator, so result of
 	// division would be quotient >= 0x10000. Actual quotient digit
@@ -348,8 +329,15 @@ DenormalResult:
 	cmp	r1, #0		// test sticky bits
 	bne	Round		// non-zero remainder, round up
 	lsl	r5, r0, #30	// test LSB for round even
-	bpl	NoRound
-	b	Round
+	bpl	RoundDone
+Round:
+	add	r0, #1		// add to rounding bit
+	// See if we just got big enough to not be denormal
+	lsl	r5, r0, #(32 - (MANT_BITS + 1 + 1))
+	bpl	RoundDone
+	// exp = 1
+	mov	r4, #1		// no longer denormal
+	b	RoundDone
 
 ZeroResult:
 	mov	r0, #0

@@ -59,7 +59,7 @@ NumSpclExp:
 	// r6 = EXP_SPECIAL
 	// r7 = 0x80000000 (sign bit position)
 	// r12 = final sign
-	bic	r0, r2		// clear existing sign
+	bic	r1, r7		// clear existing sign
 	// Return whatever numerator is, Infinity or NAN
 	b	SetSign
 
@@ -71,7 +71,8 @@ DenZeroExp:
 	// r6 = EXP_SPECIAL
 	// r7 = 0x80000000 (sign bit position)
 	// r12 = final sign
-	lsl	r6, r3, #1	// clear existing sign
+	bic	r3, r7		// clear existing sign
+	mov	r6, r3
 	orr	r6, r2
 	beq	DivByZero
 	// Denominator is denormal, so normalize it
@@ -119,7 +120,8 @@ NumZeroExp:
 	// r6 = EXP_SPECIAL
 	// r7 = 0x80000000 (sign bit position)
 	// r12 = final sign
-	lsl	r6, r1, #1	// clear existing sign
+	bic	r1, r7		// clear existing sign
+	mov	r6, r1
 	orr	r6, r0
 	beq	ZeroResult
 	mov	r4, r5		// must preserve denominator exponent
@@ -287,11 +289,10 @@ CheckSpecialRes:
 	// r12 = final sign
 	//
 	// Result can't be exactly halfway, so just round it up
-Round:
 	mov	r4, #0
 	add	r0, #1		// add to rounding bit
 	adc	r1, r4
-NoRound:
+RoundDone:
 	// Remove rounding bit
 	// quo >>= 1;
 	lsr64const	r0, r1, 1, r4
@@ -345,7 +346,16 @@ BigDenormal:
 	cmp	r2, #0		// test sticky bits
 	bne	Round		// non-zero remainder, round up
 	lsl	r4, r0, #30	// test LSB for round even
-	bpl	NoRound
-	b	Round
+	bpl	RoundDone
+Round:
+	mov	r4, #0
+	add	r0, #1		// add to rounding bit
+	adc	r1, r4
+	// See if we just got big enough to not be denormal
+	lsl	r3, r1, #(64 - (MANT_BITS + 1 + 1))
+	bpl	RoundDone
+	// exp = 1
+	mov	r5, #1		// no longer denormal
+	b	RoundDone
 
 	.endfunc

@@ -81,6 +81,11 @@ DivLoop:
 	mul	r5, r0
 	add	r3, r5
 Normalize:
+	// r0 = quotient digit
+	// r1:r6 = remainder (next numerator)
+	// r3:r2 = product to adjust remainder
+	// r7 = ponter to stack variables
+	//
 	// Re-normalize numerator by shifting left one digit,
 	// incorporating numerator extension.
 	//
@@ -138,8 +143,8 @@ QuoGood:
 	sbc	r0, r5
 	// num <<= 16;
 	lsl	r1, r0, #16
-	lsr	r4, r6, #16
-	orr	r1, r4
+	lsr	r3, r6, #16
+	orr	r1, r3
 	lsl	r6, #16
 	// quoDig = 0;
 	mov	r0, #0

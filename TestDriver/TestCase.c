@@ -9,8 +9,6 @@
 #include <stdint.h>
 #include <math.h>
 
-int isqrt(int);
-
 
 void DivI32empty(int num, int den)
 {
@@ -40,6 +38,11 @@ uint64_t DivU64(uint64_t num, uint64_t den)
 	return num / den;
 }
 
+uint64_t ModU64(uint64_t num, uint64_t den)
+{
+	return num % den;
+}
+
 void DivDblempty(double num, double den)
 {
 }
@@ -56,15 +59,6 @@ void DivFltempty(float num, float den)
 float DivFlt(float num, float den)
 {
 	return num / den;
-}
-
-void IsqrtEmpty(int val)
-{
-}
-
-int Isqrt(int val)
-{
-	return isqrt(val);
 }
 
 void SqrtFltEmpty(float val)
