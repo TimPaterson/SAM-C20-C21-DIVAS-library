@@ -3,14 +3,14 @@
  * uldivmod.s
  *
  * Created: 6/18/2020 3:35:19 PM
- *  Author: Tim
+ *  Author: Tim Paterson
  */ 
 
+.syntax unified
+.cpu cortex-m0plus
+.thumb
 
-.include "macros.h"
-
-
-	.global	__aeabi_uldivmod
+.include "macros.inc"
 
 
 // 64-bit unsigned integer division & modulo
@@ -25,81 +25,74 @@
 // A problem with the debugger in Atmel Studio prevents use
 // of meaningful label names.
 
-	.func	__aeabi_uldivmod
-
-	.thumb_func
-__aeabi_uldivmod:
+FUNC_START	__divas_uldivmod, __aeabi_uldivmod
 	push	{r4, r5, r6, r7, lr}
-	mov	r4, #0
+	movs	r4, #0
 
 	cmp	r3, #0
-	bne	2f //Normalize
+	bne	Normalize
 	// High half of denominator is zero
 	cmp	r2, #0
-	beq	3f //DivByZero
+	beq	DivByZero
 	cmp	r1, #0
-	bne	1f //ShiftDen
+	bne	ShiftDen
 	// 32 x 32 divide
-	mov	r1, r2
-	bl	__aeabi_uidivmod
+	movs	r1, r2
+	bl	__divas_uidivmod
 	// Zero extend results in r0 & r1 to r1:r0 & r3:r2
-	mov	r2, r1
-	mov	r1, #0
-	mov	r3, #0
+	movs	r2, r1
+	movs	r1, #0
+	movs	r3, #0
 	pop	{r4, r5, r6, r7, pc}
 
-1: //ShiftDen:
+ShiftDen:
 	// den <<= 32;
-	mov	r3, r2
-	mov	r2, #0
+	movs	r3, r2
+	movs	r2, #0
 	// oDig = 2
-	mov	r4, #2
-2: //Normalize:
-	// __clz_divas uses tailored calling convention
-	// r5 = input to count leading zeros
-	// r0 - r4 preserved
-	// r6, r7 trashed
-	mov	r5, r3		// pass high denominator
-	bl	__clz_divas	// Get leading zeros in denominator
+	movs	r4, #2
+Normalize:
+	movs	r5, r3		// pass high denominator
+	CLZ	r5, r6, r7	// Get leading zeros in denominator
 
 	// remShf = cDig == 0 ? cShift : cShift + 32;
-	lsl	r7, r4, #4	// r4 is 0 or 2, so r7 is 0 or 32
-	add	r7, r5		// full shift count needed after call to __div64_divas
+	lsls	r7, r4, #4	// r4 is 0 or 2, so r7 is 0 or 32
+	adds	r7, r5		// full shift count needed after call to __div64_divas
 	push	{r7}		// save over call
 
 	// Normalize denominator
 	// den <<= cShift;
-	lsl	r3, r5
-	mov	r7, r2
-	lsl	r2, r5
-	mov	r6, #32
-	sub	r6, r5
-	lsr	r7, r6
-	orr	r3, r7
+	lsls	r3, r5
+	movs	r7, r2
+	lsls	r2, r5
+	movs	r6, #32
+	subs	r6, r5
+	lsrs	r7, r6
+	orrs	r3, r7
 
 	// cDig += cShift >> 4;
-	lsr	r6, r5, #4	// count of 16-bit "digits"
-	add	r4, r6
-	lsl	r4, #1		// *2 to make it address offset
+	lsrs	r6, r5, #4	// count of 16-bit "digits"
+	adds	r4, r6
+	lsls	r4, #1		// *2 to make it address offset
 
 	// shfNum  = (cShift & 0xF) + 16;
-	mov	r6, #0x0F
-	and	r6, r5
-	add	r6, #16
+	movs	r6, #0x0F
+	ands	r6, r5
+	adds	r6, #16
 
 	// numExt = (num << shfNum) >> 16;
-	mov	r5, r0
-	lsl	r5, r6
-	lsr	r5, #16
+	movs	r5, r0
+	lsls	r5, r6
+	lsrs	r5, #16
 
 	// num >>= 32 - shfNum
-	mov	r7, r1
-	lsl	r7, r6
-	sub	r6, #32
-	neg	r6, r6
-	lsr	r0, r6
-	lsr	r1, r6
-	orr	r0, r7
+	movs	r7, r1
+	lsls	r7, r6
+	subs	r6, #32
+	negs	r6, r6
+	lsrs	r0, r6
+	lsrs	r1, r6
+	orrs	r0, r7
 
 	// r1:r0 = num, scaled numerator
 	// r3:r2 = den, normalized denominator
@@ -117,12 +110,12 @@ __aeabi_uldivmod:
 
 	pop	{r4, r5, r6, r7, pc}
 
-3: //DivByZero:
+DivByZero:
 	// Set remainder = numerator, quotient = 0
-	mov	r2, r0
-	mov	r3, r1
-	mov	r0, #0
-	mov	r1, #0
+	movs	r2, r0
+	movs	r3, r1
+	movs	r0, #0
+	movs	r1, #0
 	pop	{r4, r5, r6, r7, pc}
 
 	.endfunc

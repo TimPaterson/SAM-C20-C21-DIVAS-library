@@ -3,11 +3,15 @@
  * div64.s
  *
  * Created: 6/19/2020 2:27:09 PM
- *  Author: Tim
+ *  Author: Tim Paterson
  */ 
  
 
-.include "macros.h"
+.syntax unified
+.cpu cortex-m0plus
+.thumb
+
+.include "macros.inc"
 
 
 	.global	__div64_divas
@@ -43,13 +47,13 @@
 
 	.thumb_func
 __div64_divas:
-	mov	r6, r0
-	mov	r0, #0
+	movs	r6, r0
+	movs	r0, #0
 	push	{r0, r1, r2, r3, r4, r5, lr}// zero quotient, save den, oDig, NumExt
 	mov	r7, sp		// point to stack variables
 	str	r0, [r7, #QuoHi]
 	// r1:r6 = numerator
-	mov	r0, r1
+	movs	r0, r1
 	ldrh	r1, [r7, #Den3]
 DivLoop:
 	// if (num < den)
@@ -57,7 +61,7 @@ DivLoop:
 	blo	ZeroQuo
 
 	// Compute 16-bit "digit" guess
-	bl	__aeabi_uidivmod
+	bl	__divas_uidivmod
 
 	// Check out our guess.
 	// Currently, remainder = numerator - (quotient * high word denominator).
@@ -67,19 +71,19 @@ DivLoop:
 	//
 	// prod = (quoDig * Den1) << 16;
 	ldrh	r2, [r7, #Den1]
-	mul	r2, r0
-	lsr	r3, r2, #16
-	lsl	r2, #16
+	muls	r2, r0
+	lsrs	r3, r2, #16
+	lsls	r2, #16
 	// prod += quoDig * Den0;
 	ldrh	r4, [r7, #Den0]
-	mul	r4, r0
-	mov	r5, #0
-	add	r2, r4
-	adc	r3, r5
+	muls	r4, r0
+	movs	r5, #0
+	adds	r2, r4
+	adcs	r3, r5
 	// prodHi += quoDig * Den2
 	ldrh	r5, [r7, #Den2]
-	mul	r5, r0
-	add	r3, r5
+	muls	r5, r0
+	adds	r3, r5
 Normalize:
 	// r0 = quotient digit
 	// r1:r6 = remainder (next numerator)
@@ -93,41 +97,41 @@ Normalize:
 	lsl64const	r6, r1, 16, r4
 	// num |= numExt;
 	ldr	r4, [r7, #NumExt]
-	orr	r6, r4
+	orrs	r6, r4
 	// numExt = 0;
-	mov	r4, #0
+	movs	r4, #0
 	str	r4, [r7, #NumExt]
 
 	// Subtract to calculate full remainder
 	// Carry clear means negative remainder, quotient too large
 	//
 	// num -= prod;
-	sub	r6, r2
-	sbc	r1, r3
+	subs	r6, r2
+	sbcs	r1, r3
 	bcs	QuoGood
-	// Quotient digit was too big. Decrement and add a denominator back
+	// Quotient digit was too big. Decrement and adds a denominator back
 	ldr	r4, [r7, #Den0]
 	ldr	r5, [r7, #Den2]
 ShrinkQuo:
 	// quoDig--;
-	sub	r0, #1
+	subs	r0, #1
 	// num += den;
-	add	r6, r4
-	adc	r1, r5
+	adds	r6, r4
+	adcs	r1, r5
 	bcc	ShrinkQuo
 QuoGood:
 	// quo[oDig] = quoDig
 	ldr	r4, [r7, #oDig]
 	strh	r0, [r7, r4]
 	// oDig -= 2;
-	sub	r4, #2
+	subs	r4, #2
 	bmi	DivComplete
 	str	r4, [r7, #oDig]
 	// r1:r6 = numerator
-	mov	r0, r1
+	movs	r0, r1
 	ldrh	r1, [r7, #Den3]
 	// if ((num >> 16) >= den)
-	lsr	r2, r0, #16
+	lsrs	r2, r0, #16
 	cmp	r2, r1
 	blo	DivLoop
 	// High 16 bits of numerator equal denominator, so result of
@@ -139,28 +143,28 @@ QuoGood:
 	// num -= den;
 	ldr	r4, [r7, #Den0]
 	ldr	r5, [r7, #Den2]
-	sub	r6, r4
-	sbc	r0, r5
+	subs	r6, r4
+	sbcs	r0, r5
 	// num <<= 16;
-	lsl	r1, r0, #16
-	lsr	r3, r6, #16
-	orr	r1, r3
-	lsl	r6, #16
+	lsls	r1, r0, #16
+	lsrs	r3, r6, #16
+	orrs	r1, r3
+	lsls	r6, #16
 	// quoDig = 0;
-	mov	r0, #0
+	movs	r0, #0
 	b	ShrinkQuo
 
 DivComplete:
 // Divide complete
-	mov	r3, r1
-	mov	r2, r6		// r2:r3 has remainder
+	movs	r3, r1
+	movs	r2, r6		// r2:r3 has remainder
 	pop	{r0, r1, r4, r5, r6, r7, pc}
 
 ZeroQuo:
-	mov	r1, r0		// restore numerator
-	mov	r0, #0		// zero quotient "digit"
-	mov	r2, #0		// zero product
-	mov	r3, #0
+	movs	r1, r0		// restore numerator
+	movs	r0, #0		// zero quotient "digit"
+	movs	r2, #0		// zero product
+	movs	r3, #0
 	b	Normalize
 
 	.endfunc

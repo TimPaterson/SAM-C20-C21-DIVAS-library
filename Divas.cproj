@@ -4,7 +4,7 @@
     <SchemaVersion>2.0</SchemaVersion>
     <ProjectVersion>7.0</ProjectVersion>
     <ToolchainName>com.Atmel.ARMGCC.C</ToolchainName>
-    <ProjectGuid>dce6c7e3-ee26-4d79-826b-08594b9ad897</ProjectGuid>
+    <ProjectGuid>{dce6c7e3-ee26-4d79-826b-08594b9ad897}</ProjectGuid>
     <avrdevice>ATSAMC21G17A</avrdevice>
     <avrdeviceseries>none</avrdeviceseries>
     <OutputType>StaticLibrary</OutputType>
@@ -70,6 +70,7 @@
   <armgcc.compiler.optimization.EnableUnsafeMatchOptimizations>True</armgcc.compiler.optimization.EnableUnsafeMatchOptimizations>
   <armgcc.compiler.optimization.EnableFastMath>True</armgcc.compiler.optimization.EnableFastMath>
   <armgcc.compiler.optimization.EnableLongCalls>False</armgcc.compiler.optimization.EnableLongCalls>
+  <armgcc.compiler.optimization.DebugLevel>Maximum (-g3)</armgcc.compiler.optimization.DebugLevel>
   <armgcc.compiler.warnings.AllWarnings>True</armgcc.compiler.warnings.AllWarnings>
   <armgcc.linker.optimization.GarbageCollectUnusedSections>True</armgcc.linker.optimization.GarbageCollectUnusedSections>
   <armgcc.linker.memorysettings.ExternalRAM>False</armgcc.linker.memorysettings.ExternalRAM>
@@ -78,6 +79,7 @@
       <Value>../src</Value>
     </ListValues>
   </armgcc.assembler.general.IncludePaths>
+  <armgcc.assembler.debugging.DebugLevel>Default (-g)</armgcc.assembler.debugging.DebugLevel>
   <armgcc.preprocessingassembler.general.DefaultIncludePath>False</armgcc.preprocessingassembler.general.DefaultIncludePath>
   <armgcc.preprocessingassembler.general.IncludePaths>
     <ListValues>
@@ -136,52 +138,35 @@ echo F|xcopy $(OutputDirectory)\$(OutputFileName)$(OutputFileExtension) $(MSBuil
 </ArmGcc>
     </ToolchainSettings>
     <PostBuildEvent>"$(ToolchainDir)\arm-none-eabi-objdump" -h -S -C $(OutputDirectory)\$(OutputFileName)$(OutputFileExtension) &gt; $(OutputDirectory)\$(OutputFileName).lss
-cmd /c del $(MSBuildProjectDirectory)\TestDriver\Divas\TestDriver.elf
 </PostBuildEvent>
   </PropertyGroup>
   <ItemGroup>
-    <Compile Include="src\clz.S">
+    <Compile Include="src\div64.s">
       <SubType>compile</SubType>
     </Compile>
-    <Compile Include="src\ddiv.S">
+    <Compile Include="src\divas_asm.inc">
       <SubType>compile</SubType>
     </Compile>
-    <Compile Include="src\div64.S">
+    <Compile Include="src\ldivmod.s">
       <SubType>compile</SubType>
     </Compile>
-    <Compile Include="src\divas_asm.h">
+    <Compile Include="src\mod64.s">
       <SubType>compile</SubType>
     </Compile>
-    <Compile Include="src\fdiv.S">
+    <Compile Include="src\uidiv.s">
       <SubType>compile</SubType>
     </Compile>
-    <Compile Include="src\Ieee32.h">
-      <SubType>compile</SubType>
-    </Compile>
-    <Compile Include="src\Ieee64.h">
-      <SubType>compile</SubType>
-    </Compile>
-    <Compile Include="src\ldivmod.S">
-      <SubType>compile</SubType>
-    </Compile>
-    <Compile Include="src\macros.h">
-      <SubType>compile</SubType>
-    </Compile>
-    <Compile Include="src\sqrt.S">
-      <SubType>compile</SubType>
-    </Compile>
-    <Compile Include="src\sqrtf.S">
-      <SubType>compile</SubType>
-    </Compile>
-    <Compile Include="src\uidiv.S">
-      <SubType>compile</SubType>
-    </Compile>
-    <Compile Include="src\uldivmod.S">
+    <Compile Include="src\uldivmod.s">
       <SubType>compile</SubType>
     </Compile>
   </ItemGroup>
   <ItemGroup>
     <Folder Include="src" />
+  </ItemGroup>
+  <ItemGroup>
+    <None Include="src\macros.inc">
+      <SubType>compile</SubType>
+    </None>
   </ItemGroup>
   <Import Project="$(AVRSTUDIO_EXE_PATH)\\Vs\\Compiler.targets" />
 </Project>
