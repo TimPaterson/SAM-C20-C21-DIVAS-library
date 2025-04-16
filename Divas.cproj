@@ -153,6 +153,9 @@ echo F|xcopy $(OutputDirectory)\$(OutputFileName)$(OutputFileExtension) $(MSBuil
     <Compile Include="src\mod64.s">
       <SubType>compile</SubType>
     </Compile>
+    <Compile Include="src\sqrtu.s">
+      <SubType>compile</SubType>
+    </Compile>
     <Compile Include="src\uidiv.s">
       <SubType>compile</SubType>
     </Compile>

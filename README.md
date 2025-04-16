@@ -13,10 +13,12 @@ operations provided by the hardware module.
 This library provides DIVAS hardware accleration for the `/` (divsion)
 and `%` (modulo) operators for integer types (int32_t, uint32_t, int64_t, uint64_t). 
 All you need to do is link the library (archive, as GNU
-calls it) ahead of the standard math archive `libm`.
+calls it) ahead of the standard math archive `libm`. It also provides
+access to the unsigned integer square root capability with the function 
+`__sqrtu()`, which has a prototype in `include/divas.h`.
 
 This library does not use the DIVAS module for floating point operations
-because it stil wouldn't be as fast as my `ArmMathM0` library at 
+because it still wouldn't be as fast as my `ArmMathM0` library at 
 https://github.com/TimPaterson/ArmMathM0.
 
 ### Usage
